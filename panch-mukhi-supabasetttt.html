@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PANCH MUKHI – Truck Booking Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --saffron:#FF6B00;--saffron-light:#FF8C33;--saffron-glow:rgba(255,107,0,0.3);
+  --deep:#0A0C10;--surface:#111318;--surface2:#181C24;--surface3:#1E2330;
+  --border:rgba(255,107,0,0.18);--border2:rgba(255,255,255,0.07);
+  --text:#F0EDE8;--muted:#7A8094;--green:#00E5A0;--blue:#3B8BFF;--red:#FF4466;--yellow:#FFD000;
+  --font-head:'Exo 2',sans-serif;--font-body:'Rajdhani',sans-serif;--font-mono:'Share Tech Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--deep);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;}
+
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.grid-bg::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,107,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,0,0.04) 1px,transparent 1px);background-size:48px 48px;animation:gridMove 20s linear infinite;}
+.grid-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(255,107,0,0.12),transparent);}
+@keyframes gridMove{from{background-position:0 0;}to{background-position:48px 48px;}}
+.scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--saffron),transparent);opacity:0.4;animation:scanDown 6s linear infinite;z-index:1;pointer-events:none;}
+@keyframes scanDown{from{top:-2px;}to{top:100vh;}}
+
+.page{display:none;position:relative;z-index:2;min-height:100vh;}
+.page.active{display:flex;}
+
+/* ── LANDING ── */
+#page-landing{flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
+.logo-wrap{text-align:center;margin-bottom:3rem;animation:fadeDown 0.8s ease both;}
+.logo-emblem{width:90px;height:90px;margin:0 auto 1rem;}
+.logo-emblem svg{width:100%;height:100%;filter:drop-shadow(0 0 18px var(--saffron));}
+.logo-title{font-family:var(--font-head);font-size:3.2rem;font-weight:800;letter-spacing:0.12em;background:linear-gradient(135deg,#FFD000,#FF6B00,#FF4466);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.logo-sub{font-family:var(--font-mono);font-size:0.75rem;letter-spacing:0.35em;color:var(--muted);margin-top:0.4rem;}
+.logo-tagline{font-size:1rem;color:rgba(240,237,232,0.5);margin-top:0.6rem;letter-spacing:0.08em;}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:780px;width:100%;animation:fadeUp 0.9s 0.2s ease both;}
+.role-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 1.5rem;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all 0.35s cubic-bezier(0.23,1,0.32,1);}
+.role-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,107,0,0.08),transparent);opacity:0;transition:opacity 0.35s;}
+.role-card:hover{border-color:var(--saffron);transform:translateY(-6px);box-shadow:0 20px 60px rgba(255,107,0,0.2);}
+.role-card:hover::before{opacity:1;}
+.role-icon{width:64px;height:64px;margin:0 auto 1.2rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;position:relative;}
+.role-icon::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid;animation:spinRing 4s linear infinite;opacity:0.4;}
+.role-card:hover .role-icon::after{opacity:1;}
+.icon-admin{background:rgba(255,107,0,0.12);color:var(--saffron);}
+.icon-admin::after{border-color:var(--saffron);}
+.icon-trans{background:rgba(59,139,255,0.12);color:var(--blue);}
+.icon-trans::after{border-color:var(--blue);}
+.icon-vendor{background:rgba(0,229,160,0.12);color:var(--green);}
+.icon-vendor::after{border-color:var(--green);}
+@keyframes spinRing{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.role-name{font-family:var(--font-head);font-size:1.25rem;font-weight:700;letter-spacing:0.06em;margin-bottom:0.4rem;}
+.role-desc{font-size:0.85rem;color:var(--muted);line-height:1.5;}
+.role-badge{position:absolute;top:12px;right:12px;font-family:var(--font-mono);font-size:0.6rem;padding:3px 8px;border-radius:20px;letter-spacing:0.1em;}
+.badge-admin{background:rgba(255,107,0,0.15);color:var(--saffron);border:1px solid rgba(255,107,0,0.3);}
+.badge-trans{background:rgba(59,139,255,0.15);color:var(--blue);border:1px solid rgba(59,139,255,0.3);}
+.badge-vendor{background:rgba(0,229,160,0.15);color:var(--green);border:1px solid rgba(0,229,160,0.3);}
+
+.truck-marquee{position:fixed;bottom:0;left:0;right:0;height:44px;background:rgba(10,12,16,0.9);border-top:1px solid var(--border);display:flex;align-items:center;overflow:hidden;z-index:10;}
+.marquee-track{display:flex;gap:3rem;animation:marquee 30s linear infinite;white-space:nowrap;}
+.marquee-item{font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);letter-spacing:0.1em;display:flex;align-items:center;gap:0.5rem;}
+.marquee-dot{width:6px;height:6px;border-radius:50%;background:var(--saffron);animation:pulse 2s ease infinite;}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+
+/* ── LOGIN ── */
+#page-login{align-items:center;justify-content:center;flex-direction:column;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:440px;position:relative;overflow:hidden;animation:fadeUp 0.5s ease both;}
+.login-box::before{content:'';position:absolute;top:-50%;right:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent,rgba(255,107,0,0.05),transparent);animation:spinBg 12s linear infinite;}
+@keyframes spinBg{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.login-header{text-align:center;margin-bottom:2rem;position:relative;}
+.login-role-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 1rem;}
+.login-title{font-family:var(--font-head);font-size:1.6rem;font-weight:700;letter-spacing:0.06em;}
+.login-subtitle{font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);margin-top:0.3rem;letter-spacing:0.15em;}
+.tab-toggle{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:1.5rem;position:relative;}
+.tab-toggle button{flex:1;padding:0.5rem;border:none;background:none;color:var(--muted);font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.1em;cursor:pointer;border-radius:7px;transition:all 0.2s;}
+.tab-toggle button.active{background:var(--surface3);color:var(--text);}
+.form-group{margin-bottom:1.2rem;}
+.form-label{font-size:0.75rem;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:0.4rem;display:block;font-family:var(--font-mono);}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:0.75rem 1rem;font-size:0.95rem;color:var(--text);font-family:var(--font-body);transition:all 0.25s;outline:none;}
+.form-input:focus{border-color:var(--saffron);box-shadow:0 0 0 3px var(--saffron-glow);}
+.form-input.err{border-color:var(--red);}
+.form-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+.btn-login{width:100%;padding:0.85rem;border:none;border-radius:10px;font-family:var(--font-head);font-size:1rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;position:relative;overflow:hidden;transition:all 0.3s;margin-top:0.5rem;}
+.btn-login:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-orange{background:linear-gradient(135deg,#FF6B00,#FF8C33);color:#fff;box-shadow:0 8px 24px rgba(255,107,0,0.35);}
+.btn-blue{background:linear-gradient(135deg,#1A5FD4,#3B8BFF);color:#fff;box-shadow:0 8px 24px rgba(59,139,255,0.35);}
+.btn-green{background:linear-gradient(135deg,#00A87A,#00E5A0);color:#0a0c10;box-shadow:0 8px 24px rgba(0,229,160,0.35);}
+.btn-back{display:inline-flex;align-items:center;gap:0.5rem;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.1em;padding:0;margin-bottom:1.5rem;transition:color 0.2s;}
+.btn-back:hover{color:var(--text);}
+.auth-err{background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);border-radius:8px;padding:0.65rem 1rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--red);letter-spacing:0.06em;margin-bottom:1rem;display:none;}
+
+/* ── DASHBOARD LAYOUT ── */
+.dashboard{display:flex;min-height:100vh;width:100%;}
+.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;display:flex;flex-direction:column;flex-shrink:0;position:relative;z-index:5;}
+.sidebar-logo{padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border2);}
+.sidebar-logo-title{font-family:var(--font-head);font-size:1.2rem;font-weight:800;letter-spacing:0.1em;background:linear-gradient(135deg,#FFD000,#FF6B00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sidebar-role{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:0.2em;margin-top:0.2rem;opacity:0.5;}
+.sidebar-nav{flex:1;padding:1rem 0;}
+.nav-section{padding:0.5rem 1.5rem;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-top:1rem;}
+.nav-item{display:flex;align-items:center;gap:0.8rem;padding:0.75rem 1.5rem;cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;font-size:0.92rem;font-weight:500;color:var(--muted);letter-spacing:0.04em;}
+.nav-item:hover{background:rgba(255,107,0,0.06);color:var(--text);}
+.nav-item.active{background:rgba(255,107,0,0.1);color:var(--saffron);border-left-color:var(--saffron);}
+.nav-icon{font-size:1.1rem;width:22px;text-align:center;}
+.sidebar-footer{padding:1rem 1.5rem;border-top:1px solid var(--border2);}
+.user-chip{display:flex;align-items:center;gap:0.75rem;}
+.user-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;}
+.user-name{font-size:0.88rem;font-weight:600;}
+.user-status{font-family:var(--font-mono);font-size:0.65rem;color:var(--green);letter-spacing:0.1em;}
+.btn-logout{margin-top:0.8rem;width:100%;padding:0.5rem;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.2);border-radius:8px;color:var(--red);font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;}
+.btn-logout:hover{background:rgba(255,68,102,0.2);}
+.main-content{flex:1;overflow-y:auto;padding:2rem;background:var(--deep);}
+.main-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.page-title{font-family:var(--font-head);font-size:1.6rem;font-weight:700;letter-spacing:0.06em;}
+.page-title span{color:var(--saffron);}
+.header-actions{display:flex;align-items:center;gap:1rem;}
+.notif-btn{width:40px;height:40px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:1rem;transition:all 0.2s;}
+.notif-btn:hover{border-color:var(--saffron);}
+.notif-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--deep);}
+.live-badge{display:flex;align-items:center;gap:0.4rem;font-family:var(--font-mono);font-size:0.7rem;color:var(--green);background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);padding:6px 12px;border-radius:20px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease infinite;}
+.db-badge{display:flex;align-items:center;gap:0.4rem;font-family:var(--font-mono);font-size:0.65rem;color:var(--saffron);background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);padding:5px 10px;border-radius:20px;}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:1.4rem;position:relative;overflow:hidden;transition:all 0.3s;}
+.stat-card:hover{border-color:var(--border);transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc-orange::before{background:linear-gradient(90deg,var(--saffron),transparent);}
+.sc-blue::before{background:linear-gradient(90deg,var(--blue),transparent);}
+.sc-green::before{background:linear-gradient(90deg,var(--green),transparent);}
+.sc-yellow::before{background:linear-gradient(90deg,var(--yellow),transparent);}
+.stat-label{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin-bottom:0.7rem;}
+.stat-value{font-family:var(--font-head);font-size:2rem;font-weight:800;line-height:1;margin-bottom:0.4rem;}
+.sv-orange{color:var(--saffron);}
+.sv-blue{color:var(--blue);}
+.sv-green{color:var(--green);}
+.sv-yellow{color:var(--yellow);}
+.stat-change{font-size:0.78rem;font-family:var(--font-mono);}
+.stat-change.up{color:var(--green);}
+.stat-change.dn{color:var(--red);}
+.stat-icon{position:absolute;right:1.2rem;top:1.2rem;font-size:1.8rem;opacity:0.15;}
+
+/* ── PANELS & TABLES ── */
+.panel{background:var(--surface);border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:1.5rem;}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border2);}
+.panel-title{font-family:var(--font-head);font-size:1rem;font-weight:600;letter-spacing:0.05em;}
+.panel-action{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.1em;color:var(--saffron);cursor:pointer;background:rgba(255,107,0,0.1);border:1px solid rgba(255,107,0,0.2);padding:5px 12px;border-radius:6px;transition:all 0.2s;}
+.panel-action:hover{background:rgba(255,107,0,0.2);}
+table{width:100%;border-collapse:collapse;}
+th{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;padding:0.75rem 1.5rem;text-align:left;border-bottom:1px solid var(--border2);}
+td{padding:0.85rem 1.5rem;font-size:0.9rem;border-bottom:1px solid rgba(255,255,255,0.03);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,107,0,0.03);}
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.08em;padding:4px 10px;border-radius:20px;}
+.sp-active{background:rgba(0,229,160,0.1);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
+.sp-pending{background:rgba(255,208,0,0.1);color:var(--yellow);border:1px solid rgba(255,208,0,0.2);}
+.sp-transit{background:rgba(59,139,255,0.1);color:var(--blue);border:1px solid rgba(59,139,255,0.2);}
+.sp-done{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border2);}
+.sp-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* ── MAP VISUAL ── */
+.map-panel{background:var(--surface);border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:1.5rem;}
+.map-body{position:relative;height:200px;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,107,0,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,0,0.05) 1px,transparent 1px);background-size:30px 30px;}
+.map-route{position:absolute;top:50%;left:10%;width:80%;height:2px;}
+.route-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--saffron),var(--blue));border-radius:2px;animation:routeGrow 2s ease both;}
+@keyframes routeGrow{from{width:0}to{width:100%}}
+.route-dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translateY(-50%);border:2px solid var(--deep);}
+.rd-start{left:0;background:var(--saffron);box-shadow:0 0 10px var(--saffron);transform:translate(-50%,-50%);}
+.rd-end{right:0;background:var(--blue);box-shadow:0 0 10px var(--blue);transform:translate(50%,-50%);}
+.truck-mover{position:absolute;top:50%;font-size:1.2rem;transform:translateY(-50%);animation:truckMove 4s ease-in-out infinite alternate;}
+@keyframes truckMove{from{left:12%}to{left:82%}}
+.map-labels{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:space-between;padding:0 10%;}
+.map-label{font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;}
+
+/* ── BOOKING FORM ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;}
+.booking-form{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.full-width{grid-column:1/-1;}
+.form-row{display:flex;flex-direction:column;gap:0.4rem;}
+.select-input,.textarea-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:0.75rem 1rem;font-size:0.9rem;color:var(--text);font-family:var(--font-body);transition:all 0.25s;outline:none;}
+.select-input:focus,.textarea-input:focus{border-color:var(--saffron);box-shadow:0 0 0 3px var(--saffron-glow);}
+.select-input{appearance:none;cursor:pointer;}
+.textarea-input{resize:vertical;min-height:80px;}
+.btn-primary{padding:0.8rem 1.8rem;border:none;border-radius:10px;font-family:var(--font-head);font-size:0.95rem;font-weight:700;letter-spacing:0.08em;cursor:pointer;background:linear-gradient(135deg,#FF6B00,#FF8C33);color:#fff;box-shadow:0 6px 20px rgba(255,107,0,0.3);transition:all 0.25s;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,107,0,0.4);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-sec{padding:0.8rem 1.8rem;border:1px solid var(--border);border-radius:10px;font-family:var(--font-head);font-size:0.95rem;font-weight:600;letter-spacing:0.08em;cursor:pointer;background:transparent;color:var(--text);transition:all 0.25s;}
+.btn-sec:hover{background:var(--surface2);}
+
+.truck-types{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+.truck-type-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:1.2rem;text-align:center;cursor:pointer;transition:all 0.25s;}
+.truck-type-card:hover,.truck-type-card.selected{border-color:var(--saffron);background:rgba(255,107,0,0.06);}
+.ttc-icon{font-size:2rem;margin-bottom:0.5rem;}
+.ttc-name{font-size:0.85rem;font-weight:600;margin-bottom:0.2rem;}
+.ttc-cap{font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);}
+
+/* ── ACTIVITY FEED ── */
+.activity-item{display:flex;align-items:flex-start;gap:0.8rem;padding:0.9rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.2s;animation:fadeUp 0.3s ease both;}
+.activity-item:last-child{border-bottom:none;}
+.activity-item:hover{background:rgba(255,107,0,0.03);}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.activity-text{flex:1;font-size:0.88rem;line-height:1.4;}
+.activity-time{font-family:var(--font-mono);font-size:0.68rem;color:var(--muted);flex-shrink:0;}
+
+/* ── LOADING SKELETON ── */
+.skel{background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;display:inline-block;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-row{height:14px;margin-bottom:8px;}
+.skel-row:last-child{width:60%;}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.1em;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:60px;right:2rem;background:var(--surface);border-radius:12px;padding:1rem 1.5rem;font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.06em;z-index:9999;transform:translateY(100px);opacity:0;transition:all 0.4s cubic-bezier(0.23,1,0.32,1);max-width:320px;display:flex;align-items:center;gap:0.6rem;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border:1px solid rgba(0,229,160,0.4);color:var(--green);}
+.toast.error{border:1px solid rgba(255,68,102,0.4);color:var(--red);}
+.toast.info{border:1px solid var(--saffron);color:var(--saffron);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:480px;animation:fadeUp 0.3s ease both;}
+.modal-title{font-family:var(--font-head);font-size:1.2rem;font-weight:700;margin-bottom:1.5rem;}
+.modal-actions{display:flex;gap:0.8rem;margin-top:1.5rem;}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--deep);}
+::-webkit-scrollbar-thumb{background:rgba(255,107,0,0.3);border-radius:3px;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="scan-line"></div>
+
+<!-- ══════════════ LANDING ══════════════ -->
+<div id="page-landing" class="page active">
+  <div class="logo-wrap">
+    <div class="logo-emblem">
+      <svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="45" cy="45" r="42" stroke="#FF6B00" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <path d="M45 10 L55 30 L75 30 L60 45 L65 65 L45 55 L25 65 L30 45 L15 30 L35 30 Z" fill="#FF6B00" opacity="0.85"/>
+        <circle cx="45" cy="45" r="8" fill="#FFD000"/>
+        <circle cx="45" cy="45" r="4" fill="#0A0C10"/>
+      </svg>
+    </div>
+    <div class="logo-title">PANCH MUKHI</div>
+    <div class="logo-sub">Truck Booking Platform</div>
+    <div class="logo-tagline">Pan-India Logistics · Every Load · Every Mile</div>
+  </div>
+  <div class="role-grid">
+    <div class="role-card" onclick="showLogin('admin')">
+      <div class="role-badge badge-admin">ADMIN</div>
+      <div class="role-icon icon-admin">⚙️</div>
+      <div class="role-name">Admin</div>
+      <div class="role-desc">Full platform oversight, users, bookings &amp; live analytics</div>
+    </div>
+    <div class="role-card" onclick="showLogin('transporter')">
+      <div class="role-badge badge-trans">FLEET</div>
+      <div class="role-icon icon-trans">🚛</div>
+      <div class="role-name">Transporter</div>
+      <div class="role-desc">Manage trucks, accept loads, track deliveries in real time</div>
+    </div>
+    <div class="role-card" onclick="showLogin('vendor')">
+      <div class="role-badge badge-vendor">SHIPPER</div>
+      <div class="role-icon icon-vendor">📦</div>
+      <div class="role-name">Vendor</div>
+      <div class="role-desc">Book trucks, schedule pickups, manage all shipments</div>
+    </div>
+  </div>
+  <div class="truck-marquee">
+    <div class="marquee-track">
+      <span class="marquee-item"><span class="marquee-dot"></span>MUMBAI → DELHI · LIVE TRACKING</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>PUNE → HYDERABAD · REAL-TIME</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>JAIPUR → LUCKNOW · SUPABASE POWERED</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>SURAT → KOLKATA · LIVE DB</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>NAGPUR → CHENNAI · REAL-TIME SYNC</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>MUMBAI → DELHI · LIVE TRACKING</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>PUNE → HYDERABAD · REAL-TIME</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>JAIPUR → LUCKNOW · SUPABASE POWERED</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>SURAT → KOLKATA · LIVE DB</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>NAGPUR → CHENNAI · REAL-TIME SYNC</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="page-login" class="page">
+  <button class="btn-back" style="position:absolute;top:2rem;left:2rem;" onclick="showLanding()">← BACK</button>
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-role-icon" id="login-icon">⚙️</div>
+      <div class="login-title" id="login-title">Admin Login</div>
+      <div class="login-subtitle" id="login-sub">PANCH MUKHI PLATFORM</div>
+    </div>
+    <div class="tab-toggle" id="auth-tabs">
+      <button class="active" onclick="switchAuthMode('login',this)">SIGN IN</button>
+      <button onclick="switchAuthMode('signup',this)">REGISTER</button>
+    </div>
+    <div id="auth-err" class="auth-err"></div>
+    <!-- Sign-in fields -->
+    <div id="fields-login">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="inp-email" placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="inp-pass" placeholder="••••••••" />
+      </div>
+    </div>
+    <!-- Sign-up extra fields -->
+    <div id="fields-signup" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="su-email" placeholder="your@email.com" />
+      </div>
+      <div class="form-group form-row-inline">
+        <div>
+          <label class="form-label">Full Name</label>
+          <input class="form-input" type="text" id="su-name" placeholder="Your name" />
+        </div>
+        <div>
+          <label class="form-label">Company</label>
+          <input class="form-input" type="text" id="su-company" placeholder="Company name" />
+        </div>
+      </div>
+      <div class="form-group form-row-inline">
+        <div>
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="tel" id="su-phone" placeholder="+91 9XXXXXXXXX" />
+        </div>
+        <div>
+          <label class="form-label">State</label>
+          <select class="form-input select-input" id="su-state">
+            <option value="">Select State</option>
+            <option>Maharashtra</option><option>Delhi</option><option>Gujarat</option>
+            <option>Rajasthan</option><option>Uttar Pradesh</option><option>Karnataka</option>
+            <option>Tamil Nadu</option><option>West Bengal</option><option>Madhya Pradesh</option>
+            <option>Telangana</option><option>Punjab</option><option>Haryana</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="su-pass" placeholder="Min 6 characters" />
+      </div>
+    </div>
+    <button class="btn-login btn-orange" id="auth-btn" onclick="doAuth()">SIGN IN →</button>
+    <div style="text-align:center;margin-top:0.8rem;font-family:var(--font-mono);font-size:0.68rem;color:var(--muted);">
+      <span id="db-status" style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--yellow);display:inline-block;"></span>CONNECTING TO SUPABASE
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN DASHBOARD ══════════════ -->
+<div id="page-admin" class="page">
+  <div class="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-title">PANCH MUKHI</div>
+        <div class="sidebar-role">ADMIN CONSOLE</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">Overview</div>
+        <div class="nav-item active" onclick="switchTab('admin','admin-overview',this)"><span class="nav-icon">📊</span>Dashboard</div>
+        <div class="nav-item" onclick="switchTab('admin','admin-bookings',this)"><span class="nav-icon">📋</span>All Bookings</div>
+        <div class="nav-section">Users</div>
+        <div class="nav-item" onclick="switchTab('admin','admin-transporters',this)"><span class="nav-icon">🚛</span>Transporters</div>
+        <div class="nav-item" onclick="switchTab('admin','admin-vendors',this)"><span class="nav-icon">📦</span>Vendors</div>
+        <div class="nav-section">Monitoring</div>
+        <div class="nav-item" onclick="switchTab('admin','admin-activity',this)"><span class="nav-icon">⚡</span>Live Activity</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar" style="background:rgba(255,107,0,0.15);color:var(--saffron);" id="admin-av">AD</div>
+          <div><div class="user-name" id="admin-uname">Admin</div><div class="user-status">● ONLINE</div></div>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
+      </div>
+    </div>
+    <div class="main-content">
+
+      <!-- ADMIN: OVERVIEW -->
+      <div id="admin-overview" class="tab-pane">
+        <div class="main-header">
+          <div class="page-title">Admin <span>Dashboard</span></div>
+          <div class="header-actions">
+            <div class="db-badge">🔴 SUPABASE LIVE</div>
+            <div class="live-badge"><div class="live-dot"></div>REALTIME</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card sc-orange"><div class="stat-icon">🚛</div><div class="stat-label">Total Bookings</div><div class="stat-value sv-orange" id="a-total">—</div><div class="stat-change up" id="a-total-s"></div></div>
+          <div class="stat-card sc-blue"><div class="stat-icon">🔵</div><div class="stat-label">Transporters</div><div class="stat-value sv-blue" id="a-trans">—</div></div>
+          <div class="stat-card sc-green"><div class="stat-icon">📦</div><div class="stat-label">Vendors</div><div class="stat-value sv-green" id="a-vendors">—</div></div>
+          <div class="stat-card sc-yellow"><div class="stat-icon">📍</div><div class="stat-label">In Transit</div><div class="stat-value sv-yellow" id="a-transit">—</div></div>
+        </div>
+        <div class="map-panel">
+          <div class="panel-header"><div class="panel-title">🗺️ Live Route Visualizer</div><div class="live-badge"><div class="live-dot"></div>TRACKING</div></div>
+          <div class="map-body">
+            <div class="map-grid"></div>
+            <div class="map-route"><div class="route-line"></div><div class="route-dot rd-start"></div><div class="route-dot rd-end"></div><div class="truck-mover">🚛</div></div>
+            <div class="map-labels"><span class="map-label">ORIGIN</span><span class="map-label">EN ROUTE</span><span class="map-label">DESTINATION</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Recent Bookings</div><div class="panel-action" onclick="switchTab('admin','admin-bookings',null)">VIEW ALL</div></div>
+          <div id="admin-recent-body"><div class="empty-state">LOADING FROM DATABASE...</div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: ALL BOOKINGS -->
+      <div id="admin-bookings" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">All <span>Bookings</span></div></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Booking Records</div><div id="admin-bk-count" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);"></div></div>
+          <div id="admin-bookings-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: TRANSPORTERS -->
+      <div id="admin-transporters" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">Transporter <span>Management</span></div></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Registered Transporters</div></div>
+          <div id="admin-trans-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: VENDORS -->
+      <div id="admin-vendors" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">Vendor <span>Management</span></div></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Registered Vendors</div></div>
+          <div id="admin-vendor-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: ACTIVITY -->
+      <div id="admin-activity" class="tab-pane" style="display:none;">
+        <div class="main-header">
+          <div class="page-title">Live <span>Activity Feed</span></div>
+          <div class="live-badge"><div class="live-dot"></div>REALTIME · SUPABASE</div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">⚡ All Platform Activity</div><div class="panel-action" onclick="loadActivityFeed()">REFRESH</div></div>
+          <div id="activity-feed"><div class="empty-state">CONNECTING TO REALTIME...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TRANSPORTER DASHBOARD ══════════════ -->
+<div id="page-transporter" class="page">
+  <div class="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-title">PANCH MUKHI</div>
+        <div class="sidebar-role">TRANSPORTER PORTAL</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">My Fleet</div>
+        <div class="nav-item active" onclick="switchTab('transporter','trans-home',this)"><span class="nav-icon">🏠</span>Overview</div>
+        <div class="nav-item" onclick="switchTab('transporter','trans-loads',this)"><span class="nav-icon">📋</span>Available Loads</div>
+        <div class="nav-item" onclick="switchTab('transporter','trans-trips',this)"><span class="nav-icon">🗺️</span>My Trips</div>
+        <div class="nav-section">Fleet</div>
+        <div class="nav-item" onclick="switchTab('transporter','trans-trucks',this)"><span class="nav-icon">🚛</span>My Trucks</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar" style="background:rgba(59,139,255,0.15);color:var(--blue);" id="trans-av">TR</div>
+          <div><div class="user-name" id="trans-uname">Transporter</div><div class="user-status">● ONLINE</div></div>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
+      </div>
+    </div>
+    <div class="main-content">
+
+      <div id="trans-home" class="tab-pane">
+        <div class="main-header"><div class="page-title">Fleet <span>Overview</span></div><div class="db-badge">🔴 LIVE DB</div></div>
+        <div class="stats-grid">
+          <div class="stat-card sc-blue"><div class="stat-icon">🚛</div><div class="stat-label">My Trucks</div><div class="stat-value sv-blue" id="t-trucks">—</div></div>
+          <div class="stat-card sc-orange"><div class="stat-icon">🔥</div><div class="stat-label">Active Trips</div><div class="stat-value sv-orange" id="t-active">—</div></div>
+          <div class="stat-card sc-green"><div class="stat-icon">✅</div><div class="stat-label">Delivered</div><div class="stat-value sv-green" id="t-done">—</div></div>
+          <div class="stat-card sc-yellow"><div class="stat-icon">⏳</div><div class="stat-label">Pending Loads</div><div class="stat-value sv-yellow" id="t-pending">—</div></div>
+        </div>
+        <div class="map-panel">
+          <div class="panel-header"><div class="panel-title">🚛 Active Trip Tracker</div><div class="live-badge"><div class="live-dot"></div>LIVE</div></div>
+          <div class="map-body">
+            <div class="map-grid"></div>
+            <div class="map-route"><div class="route-line"></div><div class="route-dot rd-start"></div><div class="route-dot rd-end"></div><div class="truck-mover">🚛</div></div>
+            <div class="map-labels"><span class="map-label">ORIGIN</span><span class="map-label">EN ROUTE</span><span class="map-label">DESTINATION</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">My Assigned Bookings</div><div class="panel-action" onclick="loadTransporterData()">REFRESH</div></div>
+          <div id="trans-my-bookings"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <div id="trans-loads" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">Available <span>Loads</span></div><div class="panel-action" onclick="loadAvailableLoads()">REFRESH</div></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Open Bookings — Accept a Load</div></div>
+          <div id="trans-loads-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <div id="trans-trips" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">My <span>Trips</span></div></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Completed Trips</div></div>
+          <div id="trans-trips-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <div id="trans-trucks" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">My <span>Trucks</span></div><button class="btn-primary" onclick="openAddTruckModal()">+ Add Truck</button></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Fleet List</div></div>
+          <div id="trans-trucks-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ VENDOR DASHBOARD ══════════════ -->
+<div id="page-vendor" class="page">
+  <div class="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-title">PANCH MUKHI</div>
+        <div class="sidebar-role">VENDOR PORTAL</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">Shipments</div>
+        <div class="nav-item active" onclick="switchTab('vendor','vendor-home',this)"><span class="nav-icon">🏠</span>Overview</div>
+        <div class="nav-item" onclick="switchTab('vendor','vendor-book',this)"><span class="nav-icon">➕</span>Book Truck</div>
+        <div class="nav-item" onclick="switchTab('vendor','vendor-track',this)"><span class="nav-icon">📍</span>Track Shipments</div>
+        <div class="nav-section">History</div>
+        <div class="nav-item" onclick="switchTab('vendor','vendor-history',this)"><span class="nav-icon">📋</span>My Bookings</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar" style="background:rgba(0,229,160,0.15);color:var(--green);" id="vendor-av">VN</div>
+          <div><div class="user-name" id="vendor-uname">Vendor</div><div class="user-status">● ONLINE</div></div>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
+      </div>
+    </div>
+    <div class="main-content">
+
+      <div id="vendor-home" class="tab-pane">
+        <div class="main-header">
+          <div class="page-title">Vendor <span>Dashboard</span></div>
+          <div style="display:flex;gap:0.8rem;align-items:center;">
+            <div class="db-badge">🔴 LIVE DB</div>
+            <button class="btn-primary" onclick="switchTab('vendor','vendor-book',null)">+ Book Truck</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card sc-green"><div class="stat-icon">📦</div><div class="stat-label">Total Bookings</div><div class="stat-value sv-green" id="v-total">—</div></div>
+          <div class="stat-card sc-blue"><div class="stat-icon">🔵</div><div class="stat-label">In Transit</div><div class="stat-value sv-blue" id="v-transit">—</div></div>
+          <div class="stat-card sc-orange"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value sv-orange" id="v-pending">—</div></div>
+          <div class="stat-card sc-yellow"><div class="stat-icon">✅</div><div class="stat-label">Delivered</div><div class="stat-value sv-yellow" id="v-done">—</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Recent Shipments</div><div class="panel-action" onclick="loadVendorData()">REFRESH</div></div>
+          <div id="vendor-recent-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <div id="vendor-book" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">Book a <span>Truck</span></div></div>
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><div class="panel-title">Select Truck Type</div></div>
+          <div style="padding:1.5rem;">
+            <div class="truck-types">
+              <div class="truck-type-card selected" data-type="22-Wheeler" onclick="selectTruck(this)"><div class="ttc-icon">🚛</div><div class="ttc-name">22-Wheeler</div><div class="ttc-cap">Up to 22 MT</div></div>
+              <div class="truck-type-card" data-type="Container" onclick="selectTruck(this)"><div class="ttc-icon">📦</div><div class="ttc-name">Container</div><div class="ttc-cap">Up to 26 MT</div></div>
+              <div class="truck-type-card" data-type="Mini Truck" onclick="selectTruck(this)"><div class="ttc-icon">🛻</div><div class="ttc-name">Mini Truck</div><div class="ttc-cap">Up to 3 MT</div></div>
+              <div class="truck-type-card" data-type="Flatbed" onclick="selectTruck(this)"><div class="ttc-icon">🔩</div><div class="ttc-name">Flatbed</div><div class="ttc-cap">Up to 12 MT</div></div>
+              <div class="truck-type-card" data-type="Tanker" onclick="selectTruck(this)"><div class="ttc-icon">🛢️</div><div class="ttc-name">Tanker</div><div class="ttc-cap">Up to 20 KL</div></div>
+              <div class="truck-type-card" data-type="Open Body" onclick="selectTruck(this)"><div class="ttc-icon">🏗️</div><div class="ttc-name">Open Body</div><div class="ttc-cap">Up to 10 MT</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Shipment Details</div></div>
+          <div style="padding:1.5rem;">
+            <div class="booking-form">
+              <div class="form-row">
+                <label class="form-label">From State</label>
+                <select class="select-input" id="bk-from-state"><option value="">Select State</option><option>Maharashtra</option><option>Delhi</option><option>Gujarat</option><option>Rajasthan</option><option>Uttar Pradesh</option><option>Karnataka</option><option>Tamil Nadu</option><option>West Bengal</option><option>Madhya Pradesh</option><option>Telangana</option><option>Punjab</option><option>Haryana</option><option>Odisha</option><option>Assam</option></select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">To State</label>
+                <select class="select-input" id="bk-to-state"><option value="">Select State</option><option>Delhi</option><option>Maharashtra</option><option>Gujarat</option><option>Rajasthan</option><option>Uttar Pradesh</option><option>Karnataka</option><option>Tamil Nadu</option><option>West Bengal</option><option>Madhya Pradesh</option><option>Telangana</option><option>Punjab</option><option>Haryana</option><option>Odisha</option><option>Assam</option></select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">From City</label>
+                <input class="form-input" type="text" id="bk-from-city" placeholder="e.g. Mumbai" />
+              </div>
+              <div class="form-row">
+                <label class="form-label">To City</label>
+                <input class="form-input" type="text" id="bk-to-city" placeholder="e.g. New Delhi" />
+              </div>
+              <div class="form-row">
+                <label class="form-label">Goods Type</label>
+                <select class="select-input" id="bk-goods"><option value="">Select Type</option><option>Electronics</option><option>Textiles</option><option>Agro Products</option><option>Steel / Metal</option><option>Chemicals</option><option>FMCG</option><option>Automobile Parts</option><option>Construction Material</option><option>Pharma</option><option>Perishables</option><option>Other</option></select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Weight (MT)</label>
+                <input class="form-input" type="number" id="bk-weight" placeholder="e.g. 10" min="0.1" step="0.1" />
+              </div>
+              <div class="form-row">
+                <label class="form-label">Pickup Date</label>
+                <input class="form-input" type="date" id="bk-pickup" />
+              </div>
+              <div class="form-row">
+                <label class="form-label">Expected Delivery</label>
+                <input class="form-input" type="date" id="bk-delivery" />
+              </div>
+              <div class="form-row full-width">
+                <label class="form-label">Special Instructions</label>
+                <textarea class="textarea-input" id="bk-notes" placeholder="Fragile goods, temperature requirements, etc."></textarea>
+              </div>
+              <div class="full-width" style="display:flex;gap:1rem;margin-top:0.5rem;">
+                <button class="btn-primary" id="bk-submit-btn" onclick="submitBooking()">Confirm Booking →</button>
+                <button class="btn-sec" onclick="clearBookingForm()">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="vendor-track" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">Track <span>Shipments</span></div></div>
+        <div class="map-panel">
+          <div class="panel-header"><div class="panel-title">📍 Active Shipment Tracker</div><div class="live-badge"><div class="live-dot"></div>LIVE</div></div>
+          <div class="map-body">
+            <div class="map-grid"></div>
+            <div class="map-route"><div class="route-line"></div><div class="route-dot rd-start"></div><div class="route-dot rd-end"></div><div class="truck-mover">🚛</div></div>
+            <div class="map-labels"><span class="map-label">ORIGIN</span><span class="map-label">EN ROUTE</span><span class="map-label">DESTINATION</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">In-Transit Shipments</div></div>
+          <div id="vendor-track-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+
+      <div id="vendor-history" class="tab-pane" style="display:none;">
+        <div class="main-header"><div class="page-title">My <span>Bookings</span></div></div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">All Bookings</div><div class="panel-action" onclick="loadVendorHistory()">REFRESH</div></div>
+          <div id="vendor-history-body"><div class="empty-state">LOADING...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD TRUCK MODAL ══ -->
+<div class="modal-overlay" id="truck-modal">
+  <div class="modal">
+    <div class="modal-title">🚛 Add New Truck</div>
+    <div class="form-group"><label class="form-label">Registration Number</label><input class="form-input" id="t-reg" placeholder="e.g. MH-04-AB-1234" /></div>
+    <div class="form-row-inline" style="gap:0.8rem;display:grid;grid-template-columns:1fr 1fr;margin-bottom:1rem;">
+      <div><label class="form-label">Truck Type</label>
+        <select class="form-input select-input" id="t-type"><option>22-Wheeler</option><option>Container</option><option>Mini Truck</option><option>Flatbed</option><option>Tanker</option><option>Open Body</option></select>
+      </div>
+      <div><label class="form-label">Capacity (MT)</label><input class="form-input" id="t-cap" type="number" placeholder="22" /></div>
+    </div>
+    <div class="form-row-inline" style="gap:0.8rem;display:grid;grid-template-columns:1fr 1fr;margin-bottom:1rem;">
+      <div><label class="form-label">Driver Name</label><input class="form-input" id="t-driver" placeholder="Driver name" /></div>
+      <div><label class="form-label">Driver Phone</label><input class="form-input" id="t-phone" placeholder="+91 9XXXXXXXXX" /></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="addTruck()">Add Truck →</button>
+      <button class="btn-sec" onclick="closeTruckModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════ JAVASCRIPT ══════════════════════════ -->
+<script>
+// ── SUPABASE CONFIG ────────────────────────────────────────────────
+// Replace with your actual Supabase project URL and anon key
+const SUPABASE_URL  = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON = 'YOUR_ANON_KEY';
+// ──────────────────────────────────────────────────────────────────
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser  = null;
+let currentRole  = 'admin';
+let authMode     = 'login';
+let realtimeSub  = null;
+let selectedTruckType = '22-Wheeler';
+
+// ── INIT ──────────────────────────────────────────────────────────
+(async () => {
+  await checkSupabaseConnection();
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onSessionReady(session.user);
+  }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) await onSessionReady(session.user);
+    if (event === 'SIGNED_OUT') showLanding();
+  });
+})();
+
+async function checkSupabaseConnection() {
+  const el = document.getElementById('db-status');
+  try {
+    const { error } = await sb.from('profiles').select('id').limit(1);
+    if (error && error.code !== 'PGRST116') throw error;
+    if (el) el.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>SUPABASE CONNECTED';
+  } catch (e) {
+    if (el) el.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;"></span>CHECK CONFIG (see console)';
+    console.warn('Supabase not connected. Update SUPABASE_URL and SUPABASE_ANON in the script.', e);
+  }
+}
+
+async function onSessionReady(user) {
+  currentUser = user;
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (!profile) return;
+  currentRole = profile.role;
+  const name  = profile.company_name || profile.full_name || 'User';
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+
+  if (currentRole === 'admin') {
+    document.getElementById('admin-uname').textContent = name;
+    document.getElementById('admin-av').textContent    = initials;
+    showPage('page-admin');
+    loadAdminData();
+    subscribeActivity();
+  } else if (currentRole === 'transporter') {
+    document.getElementById('trans-uname').textContent = name;
+    document.getElementById('trans-av').textContent    = initials;
+    showPage('page-transporter');
+    loadTransporterData();
+  } else {
+    document.getElementById('vendor-uname').textContent = name;
+    document.getElementById('vendor-av').textContent    = initials;
+    showPage('page-vendor');
+    loadVendorData();
+  }
+}
+
+// ── ROUTING ───────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  const p = document.getElementById(id);
+  p.style.display = 'flex';
+  requestAnimationFrame(() => p.classList.add('active'));
+}
+function showLanding() { showPage('page-landing'); if (realtimeSub) sb.removeChannel(realtimeSub); }
+
+function showLogin(role) {
+  currentRole = role;
+  const cfg = {
+    admin:       { icon:'⚙️', title:'Admin Login',       sub:'FULL PLATFORM ACCESS',       btn:'btn-orange' },
+    transporter: { icon:'🚛', title:'Transporter Login', sub:'FLEET MANAGEMENT PORTAL',    btn:'btn-blue'   },
+    vendor:      { icon:'📦', title:'Vendor Login',      sub:'SHIPMENT BOOKING PORTAL',    btn:'btn-green'  },
+  }[role];
+  document.getElementById('login-icon').textContent  = cfg.icon;
+  document.getElementById('login-icon').className    = 'login-role-icon icon-' + role;
+  document.getElementById('login-title').textContent = cfg.title;
+  document.getElementById('login-sub').textContent   = cfg.sub;
+  document.getElementById('auth-btn').className      = 'btn-login ' + cfg.btn;
+  document.getElementById('auth-err').style.display  = 'none';
+  showPage('page-login');
+}
+
+function switchAuthMode(mode, btn) {
+  authMode = mode;
+  document.querySelectorAll('#auth-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('fields-login').style.display  = mode === 'login'  ? '' : 'none';
+  document.getElementById('fields-signup').style.display = mode === 'signup' ? '' : 'none';
+  document.getElementById('auth-btn').textContent = mode === 'login' ? 'SIGN IN →' : 'CREATE ACCOUNT →';
+  document.getElementById('auth-err').style.display = 'none';
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────
+async function doAuth() {
+  const btn = document.getElementById('auth-btn');
+  const errEl = document.getElementById('auth-err');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = authMode === 'login' ? 'SIGNING IN...' : 'CREATING...';
+
+  try {
+    if (authMode === 'login') {
+      const email = document.getElementById('inp-email').value.trim();
+      const pass  = document.getElementById('inp-pass').value;
+      if (!email || !pass) throw new Error('Please enter email and password');
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+    } else {
+      const email   = document.getElementById('su-email').value.trim();
+      const pass    = document.getElementById('su-pass').value;
+      const name    = document.getElementById('su-name').value.trim();
+      const company = document.getElementById('su-company').value.trim();
+      const phone   = document.getElementById('su-phone').value.trim();
+      const state   = document.getElementById('su-state').value;
+      if (!email || !pass || !name) throw new Error('Email, name and password are required');
+      if (pass.length < 6) throw new Error('Password must be at least 6 characters');
+      const { error } = await sb.auth.signUp({
+        email, password: pass,
+        options: { data: { full_name: name, company_name: company, phone, state, role: currentRole } }
+      });
+      if (error) throw error;
+      toast('✅ Account created! Check your email to confirm.', 'success');
+    }
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'SIGN IN →' : 'CREATE ACCOUNT →';
+  }
+}
+
+async function doLogout() {
+  if (realtimeSub) { sb.removeChannel(realtimeSub); realtimeSub = null; }
+  await sb.auth.signOut();
+  showLanding();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────
+function switchTab(scope, tabId, navEl) {
+  const page = document.getElementById('page-' + scope);
+  page.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  page.querySelectorAll('.tab-pane').forEach(t => t.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+  // lazy-load
+  if (tabId === 'admin-bookings')    loadAdminBookings();
+  if (tabId === 'admin-transporters') loadAdminUsers('transporter');
+  if (tabId === 'admin-vendors')     loadAdminUsers('vendor');
+  if (tabId === 'admin-activity')    loadActivityFeed();
+  if (tabId === 'trans-loads')       loadAvailableLoads();
+  if (tabId === 'trans-trips')       loadTransporterTrips();
+  if (tabId === 'trans-trucks')      loadMyTrucks();
+  if (tabId === 'vendor-history')    loadVendorHistory();
+  if (tabId === 'vendor-track')      loadVendorTrack();
+}
+
+// ── ADMIN DATA ────────────────────────────────────────────────────
+async function loadAdminData() {
+  try {
+    const [bkRes, prRes] = await Promise.all([
+      sb.from('bookings').select('*', { count:'exact' }),
+      sb.from('profiles').select('role', { count:'exact' })
+    ]);
+    const bookings    = bkRes.data || [];
+    const profiles    = prRes.data || [];
+    const transporters = profiles.filter(p => p.role === 'transporter').length;
+    const vendors      = profiles.filter(p => p.role === 'vendor').length;
+    const inTransit    = bookings.filter(b => b.status === 'in_transit').length;
+    document.getElementById('a-total').textContent   = bookings.length;
+    document.getElementById('a-trans').textContent   = transporters;
+    document.getElementById('a-vendors').textContent = vendors;
+    document.getElementById('a-transit').textContent = inTransit;
+    renderRecentBookings(bookings.slice(0,6), 'admin-recent-body');
+  } catch(e) { console.error(e); }
+}
+
+async function loadAdminBookings() {
+  document.getElementById('admin-bookings-body').innerHTML = '<div class="empty-state">LOADING...</div>';
+  const { data, error } = await sb.from('bookings')
+    .select('*, vendor:profiles!bookings_vendor_id_fkey(company_name,full_name)')
+    .order('created_at', { ascending: false });
+  if (error) { document.getElementById('admin-bookings-body').innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  document.getElementById('admin-bk-count').textContent = (data?.length || 0) + ' records';
+  document.getElementById('admin-bookings-body').innerHTML = data?.length
+    ? tableWrap(['Booking ID','Vendor','Route','Truck','Weight','Status'],
+        data.map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.vendor?.company_name || b.vendor?.full_name || '—'}</td>
+          <td>${b.from_city} → ${b.to_city}</td>
+          <td>${b.truck_type||'—'}</td>
+          <td>${b.weight_mt ? b.weight_mt+' MT' : '—'}</td>
+          <td>${statusPill(b.status)}</td>
+        </tr>`).join('')
+      )
+    : '<div class="empty-state">NO BOOKINGS FOUND</div>';
+}
+
+async function loadAdminUsers(role) {
+  const bodyId = role === 'transporter' ? 'admin-trans-body' : 'admin-vendor-body';
+  document.getElementById(bodyId).innerHTML = '<div class="empty-state">LOADING...</div>';
+  const { data, error } = await sb.from('profiles').select('*').eq('role', role).order('created_at', { ascending: false });
+  if (error) { document.getElementById(bodyId).innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  const headers = role === 'transporter'
+    ? ['Name','Company','State','Phone','Joined']
+    : ['Name','Company','State','Phone','Joined'];
+  document.getElementById(bodyId).innerHTML = data?.length
+    ? tableWrap(headers, data.map(p => `<tr>
+        <td>${p.full_name||'—'}</td>
+        <td>${p.company_name||'—'}</td>
+        <td>${p.state||'—'}</td>
+        <td>${p.phone||'—'}</td>
+        <td style="font-family:var(--font-mono);font-size:0.8rem;">${new Date(p.created_at).toLocaleDateString('en-IN')}</td>
+      </tr>`).join(''))
+    : `<div class="empty-state">NO ${role.toUpperCase()}S FOUND</div>`;
+}
+
+// ── REALTIME ACTIVITY ────────────────────────────────────────────
+function subscribeActivity() {
+  if (realtimeSub) sb.removeChannel(realtimeSub);
+  realtimeSub = sb.channel('activity-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, () => loadActivityFeed())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' },     () => loadAdminData())
+    .subscribe();
+}
+
+async function loadActivityFeed() {
+  const { data, error } = await sb.from('activity_log')
+    .select('*, user:profiles(full_name,company_name,role)')
+    .order('created_at', { ascending: false })
+    .limit(30);
+  const el = document.getElementById('activity-feed');
+  if (!el) return;
+  if (error) { el.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  if (!data?.length) { el.innerHTML = '<div class="empty-state">NO ACTIVITY YET</div>'; return; }
+  const colorMap = { BOOKING_CREATED:'var(--green)', TRIP_STARTED:'var(--blue)', DELIVERED:'var(--saffron)', CANCELLED:'var(--red)', BOOKING_UPDATED:'var(--yellow)' };
+  el.innerHTML = data.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${colorMap[a.action]||'var(--muted)'}"></div>
+      <div class="activity-text"><strong>${a.user?.company_name||a.user?.full_name||'User'}</strong> — ${a.details||a.action}</div>
+      <div class="activity-time">${timeAgo(a.created_at)}</div>
+    </div>`).join('');
+}
+
+// ── TRANSPORTER DATA ─────────────────────────────────────────────
+async function loadTransporterData() {
+  if (!currentUser) return;
+  const [myBk, myTr] = await Promise.all([
+    sb.from('bookings').select('*').eq('transporter_id', currentUser.id).order('created_at', { ascending:false }),
+    sb.from('trucks').select('*').eq('transporter_id', currentUser.id)
+  ]);
+  const bookings = myBk.data || [];
+  const trucks   = myTr.data || [];
+  document.getElementById('t-trucks').textContent  = trucks.length;
+  document.getElementById('t-active').textContent  = bookings.filter(b => b.status === 'in_transit').length;
+  document.getElementById('t-done').textContent    = bookings.filter(b => b.status === 'delivered').length;
+  document.getElementById('t-pending').textContent = bookings.filter(b => b.status === 'pending').length;
+  const body = document.getElementById('trans-my-bookings');
+  body.innerHTML = bookings.length
+    ? tableWrap(['Booking ID','Route','Truck Type','Status','Action'],
+        bookings.slice(0,8).map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.from_city} → ${b.to_city}</td>
+          <td>${b.truck_type||'—'}</td>
+          <td>${statusPill(b.status)}</td>
+          <td>${b.status === 'active' ? `<button class="panel-action" onclick="updateBookingStatus('${b.id}','in_transit')">Start Trip</button>` :
+               b.status === 'in_transit' ? `<button class="panel-action" onclick="updateBookingStatus('${b.id}','delivered')">Mark Delivered</button>` : '—'}</td>
+        </tr>`).join(''))
+    : '<div class="empty-state">NO TRIPS ASSIGNED YET</div>';
+}
+
+async function loadAvailableLoads() {
+  const { data, error } = await sb.from('bookings')
+    .select('*, vendor:profiles!bookings_vendor_id_fkey(company_name,full_name)')
+    .is('transporter_id', null)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  const el = document.getElementById('trans-loads-body');
+  if (error) { el.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  el.innerHTML = data?.length
+    ? tableWrap(['Booking ID','Vendor','Route','Truck','Weight','Action'],
+        data.map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.vendor?.company_name||b.vendor?.full_name||'—'}</td>
+          <td>${b.from_city} → ${b.to_city}</td>
+          <td>${b.truck_type||'—'}</td>
+          <td>${b.weight_mt ? b.weight_mt+' MT' : '—'}</td>
+          <td><button class="btn-primary" style="padding:5px 14px;font-size:0.75rem;" onclick="acceptLoad('${b.id}')">Accept</button></td>
+        </tr>`).join(''))
+    : '<div class="empty-state">NO OPEN LOADS RIGHT NOW</div>';
+}
+
+async function acceptLoad(bookingId) {
+  const { error } = await sb.from('bookings').update({ transporter_id: currentUser.id, status: 'active' }).eq('id', bookingId);
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast('✅ Load accepted! Check My Trips.', 'success');
+  loadAvailableLoads();
+  loadTransporterData();
+}
+
+async function updateBookingStatus(bookingId, status) {
+  const { error } = await sb.from('bookings').update({ status }).eq('id', bookingId);
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast(`✅ Status updated to ${status.replace('_',' ').toUpperCase()}`, 'success');
+  loadTransporterData();
+}
+
+async function loadTransporterTrips() {
+  if (!currentUser) return;
+  const { data } = await sb.from('bookings').select('*').eq('transporter_id', currentUser.id).order('created_at', { ascending: false });
+  document.getElementById('trans-trips-body').innerHTML = data?.length
+    ? tableWrap(['Booking ID','Route','Pickup Date','Status'],
+        data.map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.from_city} → ${b.to_city}</td>
+          <td>${b.pickup_date ? new Date(b.pickup_date).toLocaleDateString('en-IN') : '—'}</td>
+          <td>${statusPill(b.status)}</td>
+        </tr>`).join(''))
+    : '<div class="empty-state">NO TRIPS YET</div>';
+}
+
+async function loadMyTrucks() {
+  if (!currentUser) return;
+  const { data } = await sb.from('trucks').select('*').eq('transporter_id', currentUser.id);
+  document.getElementById('trans-trucks-body').innerHTML = data?.length
+    ? tableWrap(['Reg. Number','Type','Capacity','Driver','Status'],
+        data.map(t => `<tr>
+          <td style="font-family:var(--font-mono);">${t.reg_number}</td>
+          <td>${t.type}</td>
+          <td>${t.capacity_mt ? t.capacity_mt+' MT' : '—'}</td>
+          <td>${t.driver_name||'—'}</td>
+          <td>${statusPillTruck(t.status)}</td>
+        </tr>`).join(''))
+    : '<div class="empty-state">NO TRUCKS ADDED YET — CLICK + ADD TRUCK</div>';
+}
+
+// ── VENDOR DATA ───────────────────────────────────────────────────
+async function loadVendorData() {
+  if (!currentUser) return;
+  const { data } = await sb.from('bookings').select('*').eq('vendor_id', currentUser.id).order('created_at', { ascending: false });
+  const bk = data || [];
+  document.getElementById('v-total').textContent   = bk.length;
+  document.getElementById('v-transit').textContent = bk.filter(b => b.status === 'in_transit').length;
+  document.getElementById('v-pending').textContent = bk.filter(b => b.status === 'pending').length;
+  document.getElementById('v-done').textContent    = bk.filter(b => b.status === 'delivered').length;
+  renderRecentBookings(bk.slice(0,6), 'vendor-recent-body');
+}
+
+async function loadVendorHistory() {
+  if (!currentUser) return;
+  const { data } = await sb.from('bookings').select('*').eq('vendor_id', currentUser.id).order('created_at', { ascending: false });
+  document.getElementById('vendor-history-body').innerHTML = data?.length
+    ? tableWrap(['Booking ID','Route','Truck','Weight','Pickup','Status'],
+        data.map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.from_city} → ${b.to_city}</td>
+          <td>${b.truck_type||'—'}</td>
+          <td>${b.weight_mt ? b.weight_mt+' MT' : '—'}</td>
+          <td style="font-family:var(--font-mono);font-size:0.8rem;">${b.pickup_date ? new Date(b.pickup_date).toLocaleDateString('en-IN') : '—'}</td>
+          <td>${statusPill(b.status)}</td>
+        </tr>`).join(''))
+    : '<div class="empty-state">NO BOOKINGS YET — BOOK YOUR FIRST TRUCK!</div>';
+}
+
+async function loadVendorTrack() {
+  if (!currentUser) return;
+  const { data } = await sb.from('bookings').select('*').eq('vendor_id', currentUser.id).in('status', ['active','in_transit']);
+  document.getElementById('vendor-track-body').innerHTML = data?.length
+    ? tableWrap(['Booking ID','Route','Truck','Status','ETA'],
+        data.map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.from_city} → ${b.to_city}</td>
+          <td>${b.truck_type||'—'}</td>
+          <td>${statusPill(b.status)}</td>
+          <td style="color:var(--green);font-family:var(--font-mono);">${b.delivery_date ? new Date(b.delivery_date).toLocaleDateString('en-IN') : '—'}</td>
+        </tr>`).join(''))
+    : '<div class="empty-state">NO ACTIVE SHIPMENTS</div>';
+}
+
+async function submitBooking() {
+  if (!currentUser) { toast('Please log in', 'error'); return; }
+  const fromState = document.getElementById('bk-from-state').value;
+  const toState   = document.getElementById('bk-to-state').value;
+  const fromCity  = document.getElementById('bk-from-city').value.trim();
+  const toCity    = document.getElementById('bk-to-city').value.trim();
+  const goods     = document.getElementById('bk-goods').value;
+  const weight    = document.getElementById('bk-weight').value;
+  const pickup    = document.getElementById('bk-pickup').value;
+  const delivery  = document.getElementById('bk-delivery').value;
+  const notes     = document.getElementById('bk-notes').value.trim();
+
+  if (!fromState || !toState || !fromCity || !toCity || !goods || !weight) {
+    toast('Please fill all required fields', 'error'); return;
+  }
+  const btn = document.getElementById('bk-submit-btn');
+  btn.disabled = true; btn.textContent = 'BOOKING...';
+
+  const ref = 'PM-' + (Math.floor(Math.random() * 90000) + 10000);
+  const { error } = await sb.from('bookings').insert({
+    booking_ref: ref,
+    vendor_id:   currentUser.id,
+    from_state:  fromState, to_state: toState,
+    from_city:   fromCity,  to_city:  toCity,
+    goods_type:  goods, truck_type: selectedTruckType,
+    weight_mt:   parseFloat(weight),
+    pickup_date: pickup || null, delivery_date: delivery || null,
+    special_instructions: notes || null,
+    status: 'pending'
+  });
+  btn.disabled = false; btn.textContent = 'Confirm Booking →';
+
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast(`🎉 Booking ${ref} confirmed!`, 'success');
+  clearBookingForm();
+  loadVendorData();
+  switchTab('vendor', 'vendor-history', null);
+}
+
+function clearBookingForm() {
+  ['bk-from-state','bk-to-state','bk-goods'].forEach(id => document.getElementById(id).value = '');
+  ['bk-from-city','bk-to-city','bk-weight','bk-notes'].forEach(id => document.getElementById(id).value = '');
+  ['bk-pickup','bk-delivery'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── ADD TRUCK ─────────────────────────────────────────────────────
+function openAddTruckModal() { document.getElementById('truck-modal').classList.add('open'); }
+function closeTruckModal()   { document.getElementById('truck-modal').classList.remove('open'); }
+async function addTruck() {
+  if (!currentUser) return;
+  const reg    = document.getElementById('t-reg').value.trim();
+  const type   = document.getElementById('t-type').value;
+  const cap    = document.getElementById('t-cap').value;
+  const driver = document.getElementById('t-driver').value.trim();
+  const phone  = document.getElementById('t-phone').value.trim();
+  if (!reg || !type) { toast('Registration number and type are required', 'error'); return; }
+  const { error } = await sb.from('trucks').insert({
+    transporter_id: currentUser.id, reg_number: reg, type, capacity_mt: cap ? parseFloat(cap) : null, driver_name: driver || null, driver_phone: phone || null
+  });
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast('✅ Truck added!', 'success');
+  closeTruckModal();
+  loadMyTrucks();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function renderRecentBookings(bookings, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = bookings.length
+    ? tableWrap(['Booking ID','Route','Truck Type','Status'],
+        bookings.map(b => `<tr>
+          <td><span style="font-family:var(--font-mono);color:var(--saffron);">${b.booking_ref||'—'}</span></td>
+          <td>${b.from_city||'?'} → ${b.to_city||'?'}</td>
+          <td>${b.truck_type||'—'}</td>
+          <td>${statusPill(b.status)}</td>
+        </tr>`).join('')
+      )
+    : '<div class="empty-state">NO BOOKINGS YET</div>';
+}
+
+function tableWrap(headers, rows) {
+  return `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function statusPill(s) {
+  const map = {
+    pending:    ['sp-pending','PENDING'],
+    active:     ['sp-active','ACTIVE'],
+    in_transit: ['sp-transit','IN TRANSIT'],
+    delivered:  ['sp-done','DELIVERED'],
+    cancelled:  ['sp-done','CANCELLED']
+  };
+  const [cls, label] = map[s] || ['sp-done', s?.toUpperCase()||'—'];
+  return `<span class="status-pill ${cls}"><span class="sp-dot"></span>${label}</span>`;
+}
+
+function statusPillTruck(s) {
+  const map = { available:['sp-active','AVAILABLE'], on_trip:['sp-transit','ON TRIP'], maintenance:['sp-pending','MAINTENANCE'] };
+  const [cls, label] = map[s] || ['sp-done', s||'—'];
+  return `<span class="status-pill ${cls}"><span class="sp-dot"></span>${label}</span>`;
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff/60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m/60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h/24) + 'd ago';
+}
+
+function selectTruck(el) {
+  document.querySelectorAll('.truck-type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTruckType = el.dataset.type;
+}
+
+let toastTimer;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
+document.getElementById('inp-email').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('inp-pass').focus(); });
+</script>
+</body>
+</html>
